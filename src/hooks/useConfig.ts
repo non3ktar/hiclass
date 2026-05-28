@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG: ConfigData = {
   aiName: 'Kitten',
   systemPrompt:
     'You are a friendly cat helping a young child learn English. Keep it simple, sweet, and fun. Respond in short, simple sentences.',
-  baseUrl: import.meta.env.DEV ? '/api/openrouter/api/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions',
+  baseUrl: '/.netlify/functions/chat',
   apiKey: '',
   modelName: 'meta-llama/llama-3.3-70b-instruct:free'
 }

@@ -31,10 +31,10 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api/openrouter': {
+      '/.netlify/functions/chat': {
         target: 'https://openrouter.ai',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/openrouter/, ''),
+        rewrite: () => '/api/v1/chat/completions',
       }
     }
   },
