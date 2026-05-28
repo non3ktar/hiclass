@@ -3,44 +3,82 @@ export default async (req: Request) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
-  // A chave de API agora fica escondida no painel do Netlify
-  const API_KEY = process.env.OPENROUTER_API_KEY;
-  if (!API_KEY) {
-    return new Response(JSON.stringify({ error: "Chave de API ausente no servidor (Netlify Environment Variables)" }), { status: 500 });
+  // Agora vamos usar o Google Gemini diretamente, que tem um plano gratuito gigante e não dá erro 429!
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    return new Response(JSON.stringify({ error: "Por favor, crie a variável GEMINI_API_KEY no Netlify." }), { status: 500 });
   }
 
   try {
-    // Pegamos o corpo da requisição enviada pelo frontend
     const bodyText = await req.text();
     const bodyJson = JSON.parse(bodyText);
     
-    // Se o professor definir um modelo específico no Netlify, usamos ele. 
-    // Caso contrário, mantemos o que o frontend enviou.
-    const customModel = process.env.OPENROUTER_MODEL;
-    if (customModel && customModel.trim() !== "") {
-      bodyJson.model = customModel.trim();
+    // O frontend manda as mensagens no formato da OpenRouter.
+    // Precisamos converter para o formato do Google Gemini.
+    let systemInstructionText = "You are a friendly cat helping a young child learn English.";
+    const geminiContents = [];
+
+    for (const msg of bodyJson.messages) {
+      if (msg.role === "system") {
+        systemInstructionText = msg.content;
+      } else {
+        // Gemini usa "user" e "model" em vez de "user" e "assistant"
+        const role = msg.role === "assistant" ? "model" : "user";
+        geminiContents.push({
+          role: role,
+          parts: [{ text: msg.content }]
+        });
+      }
     }
+
+    const geminiPayload = {
+      systemInstruction: {
+        parts: [{ text: systemInstructionText }]
+      },
+      contents: geminiContents,
+      generationConfig: {
+        temperature: 0.7,
+      }
+    };
     
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    // Vamos usar o gemini-2.5-flash que é super rápido e gratuito!
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const response = await fetch(geminiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${API_KEY}`,
-        "HTTP-Referer": "https://hiclass.netlify.app", 
-        "X-Title": "HiKid PWA",
       },
-      body: JSON.stringify(bodyJson),
+      body: JSON.stringify(geminiPayload),
     });
 
-    const data = await response.text();
+    const data = await response.json();
+
+    if (!response.ok) {
+      return new Response(JSON.stringify({ error: data.error?.message || "Erro no Gemini" }), { status: response.status });
+    }
+
+    // Agora precisamos converter a resposta do Gemini de volta para o formato que o frontend espera (OpenRouter/OpenAI)
+    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Miau... I didn't understand.";
+
+    const openRouterFormatReply = {
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: replyText
+          }
+        }
+      ]
+    };
     
-    return new Response(data, {
-      status: response.status,
+    return new Response(JSON.stringify(openRouterFormatReply), {
+      status: 200,
       headers: {
         "Content-Type": "application/json",
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Server error in Netlify Function" }), { status: 500 });
   }
 };
