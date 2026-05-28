@@ -10,7 +10,16 @@ export default async (req: Request) => {
   }
 
   try {
-    const body = await req.text();
+    // Pegamos o corpo da requisição enviada pelo frontend
+    const bodyText = await req.text();
+    const bodyJson = JSON.parse(bodyText);
+    
+    // Se o professor definir um modelo específico no Netlify, usamos ele. 
+    // Caso contrário, mantemos o que o frontend enviou.
+    const customModel = process.env.OPENROUTER_MODEL;
+    if (customModel && customModel.trim() !== "") {
+      bodyJson.model = customModel.trim();
+    }
     
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -20,7 +29,7 @@ export default async (req: Request) => {
         "HTTP-Referer": "https://hiclass.netlify.app", 
         "X-Title": "HiKid PWA",
       },
-      body: body,
+      body: JSON.stringify(bodyJson),
     });
 
     const data = await response.text();
