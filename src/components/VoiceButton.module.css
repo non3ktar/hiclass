@@ -1,0 +1,81 @@
+.voiceButton {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid var(--ei-c-mint);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ei-c-brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    pointer;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 4px rgba(168, 230, 207, 0.3);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(4px);
+}
+
+.voiceButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(168, 230, 207, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.voiceButton:active:not(:disabled) {
+  transform: translateY(-2px) scale(0.96);
+}
+
+.voiceButton:disabled {
+  opacity: 0.45;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    not-allowed;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.recording {
+  background: rgba(255, 183, 197, 0.9);
+  border-color: var(--ei-c-pink);
+  box-shadow:
+    0 4px 16px rgba(255, 183, 197, 0.4),
+    0 0 0 4px rgba(255, 183, 197, 0.3);
+}
+
+.pulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 3px solid var(--ei-c-pink-soft);
+  opacity: 0.6;
+  animation: pulse-ring 1.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
